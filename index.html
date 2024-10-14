@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ساندي شوب</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #1E1E1E;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #e64a19;
+        }
+
+        #productList {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #1E1E1E;
+            border-radius: 8px;
+        }
+
+        .product-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #333;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .delete-btn {
+            background-color: #d32f2f;
+        }
+
+        .buy-btn {
+            background-color: #4CAF50;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #222;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ساندي شوب</h1>
+    </header>
+    <main>
+        <button id="addProductBtn">إضافة منتج</button>
+        <div id="productList"></div>
+    </main>
+    <div id="purchaseModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>عملية شراء</h2>
+            <label for="paymentImage">أدخل صورة التحويل:</label>
+            <input type="file" id="paymentImage" accept="image/*">
+            <button id="confirmPurchaseBtn">تأكيد الشراء</button>
+        </div>
+    </div>
+    <script>
+        const productList = document.getElementById('productList');
+        const purchaseModal = document.getElementById('purchaseModal');
+        const closeModal = document.querySelector('.close');
+        let currentProductName = '';
+
+        // تحميل المنتجات من localStorage
+        function loadProducts() {
+            const products = JSON.parse(localStorage.getItem('products')) || [];
+            products.forEach(product => {
+                addProductToList(product.name, product.price);
+            });
+        }
+
+        // إضافة منتج إلى القائمة
+        function addProductToList(name, price) {
+            const productItem = document.createElement('div');
+            productItem.className = 'product-item';
+
+            const nameElement = document.createElement('div');
+            nameElement.className = 'product-name';
+            nameElement.textContent = name;
+
+            const priceElement = document.createElement('div');
+            priceElement.textContent = `${price} كريدت ديسكورد`;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'حذف';
+            deleteBtn.addEventListener('click', () => {
+                productItem.remove();
+                removeProductFromStorage(name);
+            });
+
+            const buyBtn = document.createElement('button');
+            buyBtn.className = 'buy-btn';
+            buyBtn.textContent = 'شراء';
+            buyBtn.addEventListener('click', () => {
+                currentProductName = name;
+                purchaseModal.style.display = 'block';
+            });
+
+            productItem.appendChild(nameElement);
+            productItem.appendChild(priceElement);
+            productItem.appendChild(buyBtn);
+            productItem.appendChild(deleteBtn);
+            productList.appendChild(productItem);
+        }
+
+        // حفظ منتج في localStorage
+        function saveProductToStorage(name, price) {
+            const products = JSON.parse(localStorage.getItem('products')) || [];
+            products.push({ name, price });
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        // إزالة منتج من localStorage
+        function removeProductFromStorage(name) {
+            let products = JSON.parse(localStorage.getItem('products')) || [];
+            products = products.filter(product => product.name !== name);
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        document.getElementById('addProductBtn').addEventListener('click', () => {
+            const productName = prompt('أدخل اسم المنتج:');
+            const productPrice = prompt('أدخل سعر المنتج:');
+            if (productName && productPrice) {
+                addProductToList(productName, productPrice);
+                saveProductToStorage(productName, productPrice);
+            }
+        });
+
+        closeModal.addEventListener('click', () => {
+            purchaseModal.style.display = 'none';
+        });
+
+        document.getElementById('confirmPurchaseBtn').addEventListener('click', () => {
+            const paymentImage = document.getElementById('paymentImage').files[0];
+            if (paymentImage) {
+                alert(`تم تأكيد الشراء للمنتج: ${currentProductName}! اذهب إلى السيرفر وفتح تذكرة وقل لهم أنك اشتريت شيئاً مع صورة التحويل.`);
+                purchaseModal.style.display = 'none';
+                document.getElementById('paymentImage').value = ''; // إعادة تعيين المدخل
+            } else {
+                alert('يرجى إدخال صورة التحويل.');
+            }
+        });
+
+        // تحميل المنتجات عند فتح الصفحة
+        loadProducts();
+    </script>
+</body>
+</html>
